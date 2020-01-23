@@ -1,2 +1,26 @@
 #!/bin/bash
 
+# receives video URL and assign to a variable
+URL="$1";
+
+# Check if exists "audio downloads" directory on $HOME, if not, create it
+[ -d "$HOME/audio downloads/" ] || mkdir "$HOME/audio downloads/";
+
+# Change directory
+cd "$HOME/audio downloads/";
+
+# Assign to a variable the $URL filename
+audioInput=$(youtube-dl --get-filename $URL);
+
+# Downloading audio
+youtube-dl -f 251 $URL;
+
+# Assign extensions to audio conversion process
+audioInput="${audioInput%.*}.webm";
+audioOutput="${audioInput%.*}.opus";
+
+# Convert audio to opus 96kbps
+ffmpeg -i "$audioInput" "$audioOutput";
+
+# After conversion, remove the original file
+rm "$HOME/audio downloads/$audioInput";
