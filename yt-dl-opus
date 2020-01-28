@@ -1,4 +1,9 @@
 #!/bin/bash
+#
+# youtube-dl-opus - Download and convert audio from youtube videos to .opus format
+#
+# Author: Mateus Martins (MetaKomora)
+#
 
 # receives video URL and assign to a variable
 URL="$1";
@@ -10,17 +15,46 @@ URL="$1";
 cd "$HOME/audio downloads/";
 
 # Assign to a variable the $URL filename
-audioInput=$(youtube-dl --get-filename $URL);
+audioInput=$(youtube-dl --get-filename "$URL");
 
 # Downloading audio
-youtube-dl -f 251 $URL;
+youtube-dl -f 251 "$URL";
 
-# Assign extensions to audio conversion process
+# Assign extensions to audio convertion process
 audioInput="${audioInput%.*}.webm";
 audioOutput="${audioInput%.*}.opus";
 
-# Convert audio to opus 96kbps
-ffmpeg -i "$audioInput" "$audioOutput";
+# Convert audio to opus 96kbps and report log to a file
+ffmpeg -report -i "$audioInput" "$audioOutput" -y;
 
-# After conversion, remove the original file
-rm "$HOME/audio downloads/$audioInput";
+# grep the file to look for errors and assign to a variable
+answer=$(grep "File ended prematurely at pos" ffmpeg*);
+
+# If $answer is empty the convertion did well, if not, download with m4a alternative and convert from it
+if [ -z "$answer" ]; then
+    # after convertion, remove .webm and ffmpeg files
+    rm "$HOME/audio downloads/$audioInput";
+    rm "$HOME/audio downloads/"ffmpeg-*;
+
+    printf "\n\n######## Download and convertion completed without errors ########\n\n\n";
+
+else
+    printf "\n\n######## Convertion failed, using alternative method ########\n\n\n"; sleep 2;
+
+    # Downloading audio m4a
+    youtube-dl -f 140 "$URL";
+
+    # Changing $audioInput extension to .m4a
+    audioInput="${audioInput%.*}.m4a";
+
+    # Convert audio to opus 96kbps
+    ffmpeg -i "$audioInput" "$audioOutput" -y;
+
+    # Removing original downloaded files and the log file
+    rm "$HOME/audio downloads/$audioInput";
+    audioInput="${audioInput%.*}.webm";
+    rm "$HOME/audio downloads/$audioInput";
+    rm "$HOME/audio downloads/"ffmpeg-*;
+
+    printf "\n\n######## Download and convertion completed ########\n\n";
+fi
