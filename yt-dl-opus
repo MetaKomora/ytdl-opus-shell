@@ -25,7 +25,7 @@ audioInput="${audioInput%.*}.webm";
 audioOutput="${audioInput%.*}.opus";
 
 # Convert audio to opus 96kbps and report log to a file
-ffmpeg -report -i "$audioInput" "$audioOutput" -y;
+ffmpeg -report -i "$audioInput" -b:a 96K "$audioOutput" -y;
 
 # grep the file to look for errors and assign to a variable
 answer=$(grep "File ended prematurely at pos" ffmpeg*);
@@ -52,7 +52,7 @@ else
     audioInput="${audioInput%.*}.m4a";
 
     # Convert audio to opus 96kbps
-    ffmpeg -i "$audioInput" "$audioOutput" -y;
+    ffmpeg -i "$audioInput" -b:a 96K "$audioOutput" -y;
 
     # After conversion, remove the .m4a file
     rm "$HOME/audio downloads/$audioInput";
