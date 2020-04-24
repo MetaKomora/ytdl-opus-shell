@@ -8,54 +8,71 @@
 # receives video URL and assign to a variable
 URL="$1";
 
+function audioDefaultQuality() {
+    
+    # Copy content from webm container to opus and report log to a file
+    ffmpeg -report -i "$1" -b:a 96K "$2" -y;
+
+    # grep the file to look for errors and assign to a variable
+    answer=$(grep "File ended prematurely at pos" ffmpeg*);
+
+    # If $answer is empty the conversion did well, if not, download with m4a alternative and convert from it
+    if [ -z "$answer" ]; then
+        successClean "$1";
+
+    else
+        defaultQuality="96K";
+        alternativeMethod "$1" "$2" "$defaultQuality";
+    fi
+}
+
+function alternativeMethod() {
+
+    printf "\n\n######## conversion failed, using alternative method ########\n\n\n"; sleep 2;
+
+    # Remove the .webm and ffmpeg files
+    rm "$HOME/audio downloads/$1";
+    rm "$HOME/audio downloads/"ffmpeg-*;
+
+    # Downloading audio m4a
+    youtube-dl --rm-cache-dir -f 140 "$URL";
+
+    # Changing $audioInput extension to .m4a
+    audioInput="${1%.*}.m4a";
+
+    # Convert audio to opus 128kbps
+    ffmpeg -i "$audioInput" -b:a "$3" "$2" -y;
+
+    # After conversion, remove the .m4a file
+    rm "$HOME/audio downloads/$audioInput";
+
+    printf "\n\n######## Download and conversion completed ########\n\n";   
+}
+
+function successClean(){
+    # after conversion, remove .webm and ffmpeg files
+    rm "$HOME/audio downloads/$1";
+    rm "$HOME/audio downloads/"ffmpeg-*;
+
+    printf "\n\n######## Download and conversion completed without errors ########\n\n\n";
+}
+
 # Check if exists "audio downloads" directory on $HOME, if not, create it
 [ -d "$HOME/audio downloads/" ] || mkdir "$HOME/audio downloads/";
 
 # Change directory
-cd "$HOME/audio downloads/";
+cd "$HOME/audio downloads/" || { printf "\n\n######## Failed to enter directory %s ########\n######## Verify if it exists and create manually ########\n\n" "$HOME/audio downloads/"; exit 1; }
 
 # Assign to a variable the $URL filename
 audioInput=$(youtube-dl --get-filename "$URL");
-
-# Downloading audio
-youtube-dl -f 251 "$URL";
 
 # Assign extensions to audio conversion process
 audioInput="${audioInput%.*}.webm";
 audioOutput="${audioInput%.*}.opus";
 
-# Convert audio to opus 96kbps and report log to a file
-ffmpeg -report -i "$audioInput" -b:a 96K "$audioOutput" -y;
+# Downloading audio
+youtube-dl --rm-cache-dir -f 251 "$URL";
 
-# grep the file to look for errors and assign to a variable
-answer=$(grep "File ended prematurely at pos" ffmpeg*);
+printf "\n";
 
-# If $answer is empty the conversion did well, if not, download with m4a alternative and convert from it
-if [ -z "$answer" ]; then
-    # after conversion, remove .webm and ffmpeg files
-    rm "$HOME/audio downloads/$audioInput";
-    rm "$HOME/audio downloads/"ffmpeg-*;
-
-    printf "\n\n######## Download and conversion completed without errors ########\n\n\n";
-
-else
-    printf "\n\n######## conversion failed, using alternative method ########\n\n\n"; sleep 2;
-
-    # Remove the .webm and ffmpeg files
-    rm "$HOME/audio downloads/$audioInput";
-    rm "$HOME/audio downloads/"ffmpeg-*;
-
-    # Downloading audio m4a
-    youtube-dl -f 140 "$URL";
-
-    # Changing $audioInput extension to .m4a
-    audioInput="${audioInput%.*}.m4a";
-
-    # Convert audio to opus 96kbps
-    ffmpeg -i "$audioInput" -b:a 96K "$audioOutput" -y;
-
-    # After conversion, remove the .m4a file
-    rm "$HOME/audio downloads/$audioInput";
-
-    printf "\n\n######## Download and conversion completed ########\n\n";
-fi
+audioDefaultQuality "$audioInput" "$audioOutput";
