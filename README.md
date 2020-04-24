@@ -1,6 +1,6 @@
-# youtube-dl-opus
+# ytdl-opus-shell
 
-Youtube audio downloader for Linux. Downloads and convert to .opus format.
+Youtube audio downloader for Linux based on youtube-dl. Downloads and convert to .opus format.
 
 # Requirements
 
@@ -12,12 +12,12 @@ Look into the repositories of your distribution:
 
 # Install
 ```shell
-git clone https://github.com/MetaKomora/youtube-dl-opus.git && cd youtube-dl-opus;
-chmod +x ./yt-dl-opus;
-sudo mv yt-dl-opus /usr/local/bin/;
+git clone https://github.com/MetaKomora/ytdl-opus-shell.git && cd ytdl-opus-shell;
+chmod +x ./ytdl-opus;
+sudo mv ytdl-opus /usr/local/bin/;
 ```
 
 # Usage
 ```shell
-yt-dl-opus URL
+ytdl-opus URL
 ```
