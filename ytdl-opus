@@ -1,28 +1,36 @@
 #!/bin/bash
 #
-# youtube-dl-opus - Download and convert audio from youtube videos to .opus format
+# ytdl-opus - Download and convert audio from youtube videos to .opus format
 #
 # Author: Mateus Martins (MetaKomora)
 #
 
-# receives video URL and assign to a variable
-URL="$1";
+function audioMaxQuality(){
+
+    # Copy content from webm to opus and report log to a file
+    ffmpeg -report -i "$1" -c copy "$2" -y;
+    audioQuality="128K";
+    verification "$1" "$2" "$audioQuality";
+}
 
 function audioDefaultQuality() {
     
-    # Copy content from webm container to opus and report log to a file
+    # Convert from webm to opus and report log to a file
     ffmpeg -report -i "$1" -b:a 96K "$2" -y;
+    audioQuality="96K";
+    verification "$1" "$2" "$audioQuality";
+}
 
-    # grep the file to look for errors and assign to a variable
+function verification(){
+
+    # grep the report file to look for errors and assign to a variable
     answer=$(grep "File ended prematurely at pos" ffmpeg*);
 
     # If $answer is empty the conversion did well, if not, download with m4a alternative and convert from it
     if [ -z "$answer" ]; then
         successClean "$1";
-
     else
-        defaultQuality="96K";
-        alternativeMethod "$1" "$2" "$defaultQuality";
+        alternativeMethod "$1" "$2" "$3";
     fi
 }
 
@@ -63,8 +71,11 @@ function successClean(){
 # Change directory
 cd "$HOME/audio downloads/" || { printf "\n\n######## Failed to enter directory %s ########\n######## Verify if it exists and create manually ########\n\n" "$HOME/audio downloads/"; exit 1; }
 
+# receives video URL and assign to a variable
+URL="$1";
+
 # Assign to a variable the $URL filename
-audioInput=$(youtube-dl --get-filename "$URL");
+audioInput=$(youtube-dl --get-filename "$URL") || { printf "\n\n######## Failed to retrieve audio filename ########\n\n"; exit 1; }
 
 # Assign extensions to audio conversion process
 audioInput="${audioInput%.*}.webm";
@@ -73,6 +84,15 @@ audioOutput="${audioInput%.*}.opus";
 # Downloading audio
 youtube-dl --rm-cache-dir -f 251 "$URL";
 
+# Asks user about bitrate
+printf "\n\n######## Do you want the best audio quality available? (y|n) ########\n";
+read -r answerQuality;
+
 printf "\n";
 
-audioDefaultQuality "$audioInput" "$audioOutput";
+# If $answerQuality is y|Y, the audio quality will be set to the best
+if [ "$answerQuality" == "y" ] || [ "$answerQuality" == "Y" ]; then
+    audioMaxQuality "$audioInput" "$audioOutput";
+else
+    audioDefaultQuality "$audioInput" "$audioOutput";
+fi
