@@ -7,7 +7,7 @@
 
 function audioMaxQuality(){
 
-    # Copy content from webm to opus and report log to a file
+    # Copy audio content from webm to opus and report log to a file
     ffmpeg -report -i "$1" -c copy "$2" -y;
     audioQuality="128K";
     verification "$1" "$2" "$audioQuality";
@@ -36,25 +36,25 @@ function verification(){
 
 function alternativeMethod() {
 
-    printf "\n\n######## conversion failed, using alternative method ########\n\n\n"; sleep 2;
+    printf "\n\n\e[033;1m######## conversion failed, using alternative method ########\e[m\n\n\n"; sleep 2;
 
     # Remove the .webm and ffmpeg files
     rm "$HOME/audio downloads/$1";
     rm "$HOME/audio downloads/"ffmpeg-*;
 
-    # Downloading audio m4a
+    # Removing cache and downloading audio m4a
     youtube-dl --rm-cache-dir -f 140 "$URL";
 
     # Changing $audioInput extension to .m4a
     audioInput="${1%.*}.m4a";
 
-    # Convert audio to opus 128kbps
+    # Convert audio to opus with bitrate choosen by user
     ffmpeg -i "$audioInput" -b:a "$3" "$2" -y;
 
     # After conversion, remove the .m4a file
     rm "$HOME/audio downloads/$audioInput";
 
-    printf "\n\n######## Download and conversion completed ########\n\n";   
+    printf "\n\n\e[032;1m######## Download and conversion completed ########\e[m\n\n";   
 }
 
 function successClean(){
@@ -62,30 +62,30 @@ function successClean(){
     rm "$HOME/audio downloads/$1";
     rm "$HOME/audio downloads/"ffmpeg-*;
 
-    printf "\n\n######## Download and conversion completed without errors ########\n\n\n";
+    printf "\n\n\e[032;1m######## Download and conversion completed without errors ########\e[m\n\n\n";
 }
 
 # Check if exists "audio downloads" directory on $HOME, if not, create it
 [ -d "$HOME/audio downloads/" ] || mkdir "$HOME/audio downloads/";
 
 # Change directory
-cd "$HOME/audio downloads/" || { printf "\n\n######## Failed to enter directory %s ########\n######## Verify if it exists and create manually ########\n\n" "$HOME/audio downloads/"; exit 1; }
+cd "$HOME/audio downloads/" || { printf "\n\n\e[031;1m######## Failed to enter directory %s ########\n######## Verify if it exists and create manually ########\e[m\n\n" "$HOME/audio downloads/"; exit 1; }
 
 # receives video URL and assign to a variable
 URL="$1";
 
 # Assign to a variable the $URL filename
-audioInput=$(youtube-dl --get-filename "$URL") || { printf "\n\n######## Failed to retrieve audio filename ########\n\n"; exit 1; }
+audioInput=$(youtube-dl --get-filename "$URL") || { printf "\n\n\e[031;1m######## Failed to retrieve audio filename ########\e[m\n\n"; exit 1; }
 
 # Assign extensions to audio conversion process
 audioInput="${audioInput%.*}.webm";
 audioOutput="${audioInput%.*}.opus";
 
-# Downloading audio
+# Removin cache and downloading audio
 youtube-dl --rm-cache-dir -f 251 "$URL";
 
 # Asks user about bitrate
-printf "\n\n######## Do you want the best audio quality available? (y|n) ########\n";
+printf "\n\n\e[034;1m######## Do you want the best audio quality available? (y|n) ########\e[m\n";
 read -r answerQuality;
 
 printf "\n";
